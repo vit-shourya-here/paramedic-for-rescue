@@ -1,0 +1,74 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: powershell
+        run: |
+          python -m pip install -r requirements.txt
+          if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed" }
+
+      - name: Run tests
+        shell: powershell
+        run: |
+          python -m pytest -v
+          if ($LASTEXITCODE -ne 0) { throw "Tests failed" }
+
+      - name: Purge old Docker credentials cache
+        shell: powershell
+        run: |
+          Remove-Item "$env:USERPROFILE\.docker\config.json" -Force -ErrorAction SilentlyContinue
+
+      - name: Docker Hub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        shell: powershell
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          $IMAGE = "$env:DOCKERHUB_USERNAME/web-app:${{ github.run_number }}"
+          docker build -t $IMAGE .
+          if ($LASTEXITCODE -ne 0) { throw "Docker build failed" }
+
+      - name: Push Docker image
+        shell: powershell
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          $IMAGE = "$env:DOCKERHUB_USERNAME/web-app:${{ github.run_number }}"
+          docker push $IMAGE
+          if ($LASTEXITCODE -ne 0) { throw "Docker push failed" }
+
+      - name: Deploy to Kubernetes
+        shell: powershell
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          $IMAGE = "$env:DOCKERHUB_USERNAME/web-app:${{ github.run_number }}"
+
+          kubectl apply -f deployment.yaml
+          if ($LASTEXITCODE -ne 0) { throw "Deployment apply failed" }
+
+          kubectl apply -f service.yaml
+          if ($LASTEXITCODE -ne 0) { throw "Service apply failed" }
+
+          kubectl set image deployment/app-deployment web-app=$IMAGE
+          if ($LASTEXITCODE -ne 0) { throw "Image update failed" }
+
+          kubectl rollout status deployment/app-deployment --timeout=120s
+          if ($LASTEXITCODE -ne 0) { throw "Kubernetes rollout failed" }

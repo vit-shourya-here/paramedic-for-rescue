@@ -1,0 +1,33 @@
+Flask==3.0.0
+pytest==7.4.3
+werkzeug==3.0.1
+
+The DevOps and infrastructure files (deployment.yaml, service.yaml, pipeline.yml, 
+and Dockerfile) will work perfectly for every single question in the PDF without any 
+modifications (other than adding your specific Docker Hub username). They provide a 
+standard pipeline that fulfills the core assignment requirements: checking out code, 
+installing dependencies, running automated tests, building/pushing the Docker image, 
+and deploying to Kubernetes across two versioned pushes.   However, the Python application 
+files (app.py and test_app.py) will require minor modifications to their internal logic 
+to match the specific question you choose to solve.Here is exactly what you need to adjust
+ in the Python files for the different questions:Inputs and Form Variables: 
+ The generic template uses val1 and val2. For Question 3 (Shopping Bill), 
+ you will need to rename these to price and quantity to calculate the bill
+  and discount. For Question 2 (Grade Calculator), you may need more inputs
+   for multiple student marks.   Business Logic (app.py): The if/elif block
+    in the template only performs basic arithmetic. 
+    For Question 4 (Temperature Converter), 
+    you must implement the Celsius/Fahrenheit conversion formulas.
+     For Question 5 (Banking) and Question 6 (Library), 
+     you will need to add simple variables or data structures 
+     (like a Python list or dictionary) to store the bank balance
+      or available library books across requests.   
+      Test Cases (test_app.py): You must update the 
+      test assertions to look for the correct outputs. 
+      If you are doing Question 2, your tests should assert 
+      that the correct grade (e.g., "A", "B") is returned in 
+      the HTML response rather than a numeric math result.   
+      In short: copy and paste the Kubernetes, Docker, and GitHub Actions
+       files as-is. Use the app.py and test_app.py as a structural shell, 
+       but fill out the specific formulas and tests inside them based on which
+        of the 6 questions you are assigned.

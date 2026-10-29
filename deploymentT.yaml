@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+        - name: web-app
+          # REPLACE 'YOUR_DOCKERHUB_USERNAME' with your actual username
+          image: YOUR_DOCKERHUB_USERNAME/web-app:latest
+          ports:
+            - containerPort: 5000
